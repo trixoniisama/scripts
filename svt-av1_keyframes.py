@@ -12,6 +12,7 @@ def keyframes_helper(file_path, overwrite, method, min_kf_dist, max_kf_dist):
     print("Generating keyframes config file...")
     clip = core.lsmas.LWLibavSource(r"{}".format(file_path))
     keyframes = Keyframes.from_clip(clip, 1 if method=="accurate" else 0)
+    keyframes.sort()
 
     #print(len(keyframes))
     for i, frame in enumerate(keyframes):
@@ -23,10 +24,16 @@ def keyframes_helper(file_path, overwrite, method, min_kf_dist, max_kf_dist):
             if frame_diff>=min_kf_dist:
                 keyframes_cut.append(str(frame))
 
-            if frame_diff>=max_kf_dist and frame_diff-max_kf_dist>=min_kf_dist:
-                keyframes_cut.append(str(keyframes[i-1]+max_kf_dist))
+            x = 1
+            while frame_diff>=max_kf_dist and frame_diff-max_kf_dist>=min_kf_dist:
+                keyframes_cut.append(str(keyframes[i-1]+max_kf_dist*x))
+                frame_diff = frame_diff - max_kf_dist
+                x += 1
+
     #print(len(keyframes_cut))
 
+    keyframes_cut = [int(fr) for fr in keyframes_cut]
+    keyframes_cut.sort()
     keyframes_str = f"ForceKeyFrames : {'f,'.join([str(i) for i in keyframes_cut])}f"
     with open(out, "w", encoding="utf-8") as f:
         f.write(keyframes_str)
